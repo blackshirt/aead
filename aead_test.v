@@ -42,8 +42,8 @@ fn test_cpoly_protector() ! {
 	}
 	expected_tag := hex.decode('1ae10b594f09e26a7e902ecbd0600691') or { panic(err.msg()) }
 
-	protector := new_cpoly_protector()
-	out := protector.aead_encrypt(key, nonce, aad, plaintext_bytes)!
+	protector := new_default_chacha20poly1305_protector()
+	out := protector.encrypt(key, nonce, aad, plaintext_bytes)!
 
 	ciphertext := out[..out.len - protector.tag_size()]
 	mac := out[out.len - protector.tag_size()..]
