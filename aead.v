@@ -42,7 +42,7 @@ struct Chacha20Poly1305 {
 // creates new instance ChaCha20Poly1305 AEAD Cipher use nonce size based on with_x_nonce flag.
 // when true, its using extended nonce size, ie, 24 bytes..otherwise was using
 // standard nonce_size of 12 bytes.
-pub fn new_chacha20poly1305_cipherr(with_x_nonce bool) &Cipher {
+pub fn new_chacha20poly1305_cipher(with_x_nonce bool) &Cipher {
 	return &Chacha20Poly1305{
 		with_x_nonce: with_x_nonce
 	}
