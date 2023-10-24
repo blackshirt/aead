@@ -49,7 +49,7 @@ pub fn new_chacha20poly1305_cipherr(with_x_nonce bool) &Cipher {
 }
 
 // new_default_chacha20poly1305_cipher creates ChaCha20Poly1305 AEAD cipher with standard nonce size.
-pub fn new_default_chacha20poly1305_cioher() &Cipher {
+pub fn new_default_chacha20poly1305_cipher() &Cipher {
 	cpoly := new_chacha20poly1305_cipher(false)
 	return cpoly
 }
