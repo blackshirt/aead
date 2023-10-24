@@ -12,19 +12,26 @@ import blackshirt.chacha20poly1305
 pub interface Cipher {
 	// nonce_size tell size of nonce input, in bytes, to underlying aead protector
 	nonce_size() int
+	
 	// tag_size is size of the output of Aead message authenticated code (MAC) from
+	
 	// aead encrypt operation, in bytes.
 	tag_size() int
+	
 	// key_size is size of key used for aead operation
 	key_size() int
+	
 	// encrypt do encrypt and authenticated message to plaintext and additional data from given
-	// secret_key and nonce, its return aead encrypted text plus message authentication code (mac)
+	// secret_key and nonce, its return aead encrypted text and message authentication code (mac)
 	encrypt(secret_key []u8, nonce []u8, plaintext []u8, additional_data []u8) !([]u8, []u8)
-	// decrypt do reverse of encrypt operation
-	decrypt(secret_key []u8, nonce []u8, additional_data []u8, ciphertext []u8) ![]u8
+	
+	// decrypt do reverse of encrypt operation, its returns plaintext and associated tag (mac)
+	decrypt(secret_key []u8, nonce []u8, additional_data []u8, ciphertext []u8) !([]u8, []u8)
+	
 	// verify was doing check and verify of the provided mac arguemnt by doing unprptect operation
-	// and then compares mac's result and provided mac.
-	verify(secret_key []u8, nonce []u8, additional_data []u8, ciphertext []u8, mac []u8) !bool
+	// and then compares mac's result and provided mac. Its return plaintext and validity of tag (mac) result.
+	// Its should return true on matching, and false otherwise
+	decrypt_and_verify(secret_key []u8, nonce []u8, additional_data []u8, ciphertext []u8, mac []u8) !([]u8, bool)
 }
 
 // ChaCha20Poly1305 Aead Cipher implementation
@@ -35,7 +42,7 @@ struct Chacha20Poly1305 {
 // creates new instance ChaCha20Poly1305 AEAD Cipher use nonce size based on with_x_nonce flag.
 // when true, its using extended nonce size, ie, 24 bytes..otherwise was using
 // standard nonce_size of 12 bytes.
-pub fn new_chacha20poly1305_protector(with_x_nonce bool) &Cipher {
+pub fn new_chacha20poly1305_cipherr(with_x_nonce bool) &Cipher {
 	return &Chacha20Poly1305{
 		with_x_nonce: with_x_nonce
 	}
@@ -43,7 +50,7 @@ pub fn new_chacha20poly1305_protector(with_x_nonce bool) &Cipher {
 
 // new_default_chacha20poly1305_cipher creates ChaCha20Poly1305 AEAD cipher with standard nonce size.
 pub fn new_default_chacha20poly1305_cioher() &Cipher {
-	cpoly := new_chacha20poly1305_protector(false)
+	cpoly := new_chacha20poly1305_cipher(false)
 	return cpoly
 }
 
@@ -63,30 +70,20 @@ pub fn (c Chacha20Poly1305) tag_size() int {
 	return chacha20poly1305.tag_size
 }
 
-pub fn (c Chacha20Poly1305) encrypt(secret_key []u8, nonce []u8, additional_data []u8, plaintext []u8) ![]u8 {
-	ciphertext, mac := chacha20poly1305.aead_encrypt(secret_key, nonce, additional_data,
-		plaintext)!
-	mut result := []u8{}
-	result << ciphertext
-	result << mac
-
-	return result
+		pub fn (c Chacha20Poly1305) encrypt(secret_key []u8, nonce []u8, additional_data []u8, plaintext []u8) !([]u8, []u8) {
+	ciphertext, mac := chacha20poly1305.aead_encrypt(secret_key, nonce, additional_data, plaintext)!
+	
+	return ciphertext, mac
 }
 
-pub fn (c Chacha20Poly1305) decrypt(secret_key []u8, nonce []u8, additional_data []u8, ciphertext []u8) ![]u8 {
-	plaintext, tag := chacha20poly1305.aead_decrypt(secret_key, nonce, additional_data,
-		ciphertext)!
-	mut result := []u8{}
-	result << plaintext
-	result << tag
-
-	return result
+pub fn (c Chacha20Poly1305) decrypt(secret_key []u8, nonce []u8, additional_data []u8, ciphertext []u8) !([]u8, []u8) {
+	plaintext, tag := chacha20poly1305.aead_decrypt(secret_key, nonce, additional_data, ciphertext)!
+	
+	return plaintext, tag
 }
 
-pub fn (c Chacha20Poly1305) verify(secret_key []u8, nonce []u8, additional_data []u8, ciphertext []u8, mac []u8) !bool {
-	result := c.decrypt(secret_key, nonce, additional_data, ciphertext)!
-	idx := result.len - c.tag_size()
-
-	tag := result[idx..idx + c.tag_size()]
-	return subtle.constant_time_compare(tag, mac) == 1
+pub fn (c Chacha20Poly1305) verify(secret_key []u8, nonce []u8, additional_data []u8, ciphertext []u8, mac []u8) !([]u8, bool) {
+	plaintext, tag := c.decrypt(secret_key, nonce, additional_data, ciphertext)!
+	valid := subtle.constant_time_compare(tag, mac) == 1
+	return plaintext, valid
 }
