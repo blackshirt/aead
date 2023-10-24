@@ -82,7 +82,7 @@ pub fn (c Chacha20Poly1305) decrypt(secret_key []u8, nonce []u8, additional_data
 	return plaintext, tag
 }
 
-pub fn (c Chacha20Poly1305) verify(secret_key []u8, nonce []u8, additional_data []u8, ciphertext []u8, mac []u8) !([]u8, bool) {
+pub fn (c Chacha20Poly1305) decrypt_and_verify(secret_key []u8, nonce []u8, additional_data []u8, ciphertext []u8, mac []u8) !([]u8, bool) {
 	plaintext, tag := c.decrypt(secret_key, nonce, additional_data, ciphertext)!
 	valid := subtle.constant_time_compare(tag, mac) == 1
 	return plaintext, valid
