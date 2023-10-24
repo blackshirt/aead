@@ -5,7 +5,7 @@ module aead
 import encoding.hex
 import chacha20
 
-fn test_cpoly_protector() ! {
+fn test_cpoly_cipher_encrypt_and_decrypt_verify() ! {
 	plaintext := "Ladies and Gentlemen of the class of '99: If I could offer you only one tip forthe future, sunscreen would be i"
 	plaintext_bytes := [u8(0x4c), 0x61, 0x64, 0x69, 0x65, 0x73, 0x20, 0x61, 0x6e, 0x64, 0x20, 0x47,
 		0x65, 0x6e, 0x74, 0x6c, 0x65, 0x6d, 0x65, 0x6e, 0x20, 0x6f, 0x66, 0x20, 0x74, 0x68, 0x65,
@@ -42,11 +42,15 @@ fn test_cpoly_protector() ! {
 	}
 	expected_tag := hex.decode('1ae10b594f09e26a7e902ecbd0600691') or { panic(err.msg()) }
 
-	protector := new_default_chacha20poly1305_protector()
-	out := protector.encrypt(key, nonce, aad, plaintext_bytes)!
+	cipher := new_default_chacha20poly1305_cipherr()
+	// encrypt 
+	ciphertext, mac := cipher.encrypt(key, nonce, aad, plaintext_bytes)!
 
-	ciphertext := out[..out.len - protector.tag_size()]
-	mac := out[out.len - protector.tag_size()..]
 	assert ciphertext == expected_ciphertext
 	assert mac == expected_tag
+
+	// decrypt and verify back
+	decrypted_plaintext, status := cipher.decrypt_and_verify(key, nonce, aad, expected_ciphertext, expected_tag)!
+	assert decrypted_plaintext == plaintext_bytes
+	assert status == true 
 }
