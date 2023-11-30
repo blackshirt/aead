@@ -70,7 +70,7 @@ pub fn (c Chacha20Poly1305) tag_size() int {
 	return chacha20poly1305.tag_size
 }
 
-		pub fn (c Chacha20Poly1305) encrypt(secret_key []u8, nonce []u8, additional_data []u8, plaintext []u8) !([]u8, []u8) {
+pub fn (c Chacha20Poly1305) encrypt(secret_key []u8, nonce []u8, additional_data []u8, plaintext []u8) !([]u8, []u8) {
 	ciphertext, mac := chacha20poly1305.aead_encrypt(secret_key, nonce, additional_data, plaintext)!
 	
 	return ciphertext, mac
